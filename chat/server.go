@@ -38,7 +38,7 @@ type Server struct {
 }
 
 func NewServer() *Server {
-	Messages := make([]*Message, 0, 5)
+	Messages := make([]*Message, 0, 100)
 	connectedUsers := make(map[int]*User)
 	UsersTokens := make(map[string]string)
 	addUser := make(chan *User)
