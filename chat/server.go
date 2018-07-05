@@ -1,23 +1,24 @@
 package chat
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/websocket"
 
-	"database/sql"
-
 	_ "github.com/go-sql-driver/mysql"
+	//_ "github.com/lib/pq"
 )
+
+//var db, err = sql.Open("postgres", "host= port= user= password= dbname= sslmode=disable")
+var db, err = sql.Open("mysql", "root:Ww19082001@/chat")
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
-
-var db, err = sql.Open("mysql", "root:Ww19082001@/chat")
 
 var mySigningKey = []byte("secret")
 
@@ -38,7 +39,7 @@ type Server struct {
 }
 
 func NewServer() *Server {
-	Messages := make([]*Message, 0, 100)
+	Messages := make([]*Message, 0, 5)
 	connectedUsers := make(map[int]*User)
 	UsersTokens := make(map[string]string)
 	addUser := make(chan *User)
@@ -96,10 +97,11 @@ func (server *Server) sendAll(msg *Message) {
 
 func (server *Server) Listen() {
 
-	if err != nil {
-		log.Println("Database error: ", err)
-	}
 	defer db.Close()
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	log.Println("Server Listening .....")
 
