@@ -1,9 +1,9 @@
 # chat-app
 Simple chat
 
-To start  `go run main.go`
+Запуск  `go run main.go`
 
-Then open localhost:8888
+Открыть в браузере localhost:8888
 
 Общие сведения и описание API
 -------
