@@ -28,10 +28,16 @@ type Chg struct {
 	Name  string `json:"name"`
 }
 
+type Result struct {
+	Status int         `json:"status"`
+	Result interface{} `json:"result,omitempty"`
+}
+
 func (server *Server) handleApiSign(responseWriter http.ResponseWriter, request *http.Request) {
 
 	if request.Method != "POST" {
-		http.Error(responseWriter, http.StatusText(405), 405)
+		r := Result{405, "Method Not Allowed"}
+		json.NewEncoder(responseWriter).Encode(r)
 		return
 	}
 
@@ -52,7 +58,8 @@ func (server *Server) handleApiSign(responseWriter http.ResponseWriter, request 
 	name := u.Name
 
 	if login == "" || password == "" || name == "" {
-		http.Error(responseWriter, http.StatusText(400), 400)
+		r := Result{400, "Bad Request"}
+		json.NewEncoder(responseWriter).Encode(r)
 		return
 	}
 
@@ -74,8 +81,9 @@ func (server *Server) handleApiSign(responseWriter http.ResponseWriter, request 
 	}
 
 	if loginExist != 0 {
-		http.Error(responseWriter, http.StatusText(400), 400)
-		log.Println("Login exists")
+		r := Result{400, "Bad Request"}
+		json.NewEncoder(responseWriter).Encode(r)
+		log.Println("User exists")
 		return
 	}
 
@@ -89,20 +97,20 @@ func (server *Server) handleApiSign(responseWriter http.ResponseWriter, request 
 
 	if err != nil {
 		log.Println(err)
-		json.NewEncoder(responseWriter).Encode("{token\":" + tokenString + "}")
-		http.Error(responseWriter, http.StatusText(500), 500)
+		r := Result{500, "Internal Server Error"}
+		json.NewEncoder(responseWriter).Encode(r)
 		return
 	}
 	log.Println("ID", id)
-	//	json.NewEncoder(responseWriter).Encode("{token\":" + tokenString + "}")
-	var t Token
-	t.Token = tokenString
-	json.NewEncoder(responseWriter).Encode(t)
+	t := Token{tokenString}
+	r := Result{200, t}
+	json.NewEncoder(responseWriter).Encode(r)
 }
 
 func (server *Server) handleChangeName(responseWriter http.ResponseWriter, request *http.Request) {
 	if request.Method != "POST" {
-		http.Error(responseWriter, http.StatusText(405), 405)
+		r := Result{405, "Method Not Allowed"}
+		json.NewEncoder(responseWriter).Encode(r)
 		return
 	}
 
@@ -117,8 +125,9 @@ func (server *Server) handleChangeName(responseWriter http.ResponseWriter, reque
 	token := c.Token
 
 	if _, ok := server.usersTokens[token]; !ok {
-		log.Println("Not authorized")
-		http.Error(responseWriter, http.StatusText(401), 401)
+		log.Println("Unauthorized")
+		r := Result{401, "Unauthorized"}
+		json.NewEncoder(responseWriter).Encode(r)
 		return
 	}
 
@@ -129,12 +138,14 @@ func (server *Server) handleChangeName(responseWriter http.ResponseWriter, reque
 	change.Exec(name, token)
 	log.Println("Change name:", server.usersTokens[token], "to", name)
 	server.usersTokens[token] = name
-
+	r := Result{200, "OK"}
+	json.NewEncoder(responseWriter).Encode(r)
 }
 
 func (server *Server) handleSendMessage(responseWriter http.ResponseWriter, request *http.Request) {
 	if request.Method != "POST" {
-		http.Error(responseWriter, http.StatusText(405), 405)
+		r := Result{405, "Method Not Allowed"}
+		json.NewEncoder(responseWriter).Encode(r)
 		return
 	}
 	log.Println("Handling send message")
@@ -147,15 +158,13 @@ func (server *Server) handleSendMessage(responseWriter http.ResponseWriter, requ
 	}
 
 	if _, ok := server.usersTokens[m.Token]; !ok {
-		log.Println("Not authorized")
-		http.Error(responseWriter, http.StatusText(401), 401)
+		log.Println("Unauthorized")
+		r := Result{401, "Unauthorized"}
+		json.NewEncoder(responseWriter).Encode(r)
 		return
 	}
 
-	var message Message
-
-	message.UserName = server.usersTokens[m.Token]
-	message.Body = m.Body
+	message := Message{server.usersTokens[m.Token], m.Body}
 
 	log.Println(message.UserName)
 
@@ -164,11 +173,14 @@ func (server *Server) handleSendMessage(responseWriter http.ResponseWriter, requ
 	}
 	server.Messages = append(server.Messages, &message)
 	server.sendAll(&message)
+	r := Result{200, "OK"}
+	json.NewEncoder(responseWriter).Encode(r)
 }
 
 func (server *Server) handleGetAllMessages(responseWriter http.ResponseWriter, request *http.Request) {
-	if request.Method != "GET" {
-		http.Error(responseWriter, http.StatusText(405), 405)
+	if request.Method != "POST" {
+		r := Result{405, "Method Not Allowed"}
+		json.NewEncoder(responseWriter).Encode(r)
 		return
 	}
 
@@ -180,15 +192,18 @@ func (server *Server) handleGetAllMessages(responseWriter http.ResponseWriter, r
 	}
 
 	if _, ok := server.usersTokens[t.Token]; ok {
-		json.NewEncoder(responseWriter).Encode(server)
+		r := Result{200, server}
+		json.NewEncoder(responseWriter).Encode(r)
 	} else {
-		json.NewEncoder(responseWriter).Encode("")
+		r := Result{401, "Unauthorized"}
+		json.NewEncoder(responseWriter).Encode(r)
 	}
 }
 
 func (server *Server) handleApiLogin(responseWriter http.ResponseWriter, request *http.Request) {
 	if request.Method != "POST" {
-		http.Error(responseWriter, http.StatusText(405), 405)
+		r := Result{405, "Method Not Allowed"}
+		json.NewEncoder(responseWriter).Encode(r)
 		return
 	}
 
@@ -222,5 +237,7 @@ func (server *Server) handleApiLogin(responseWriter http.ResponseWriter, request
 
 	log.Println("Success auth:", name, t.Token)
 
-	json.NewEncoder(responseWriter).Encode(t)
+	r := Result{200, t}
+
+	json.NewEncoder(responseWriter).Encode(r)
 }
