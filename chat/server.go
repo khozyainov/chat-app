@@ -12,8 +12,7 @@ import (
 	//_ "github.com/lib/pq"
 )
 
-//var db, err = sql.Open("postgres", "host= port= user= password= dbname= sslmode=disable")
-var db, err = sql.Open("mysql", "root:Ww19082001@/chat")
+var db, err = sql.Open("postgres", "host= port= user= password= dbname= sslmode=disable")
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -97,6 +96,10 @@ func (server *Server) sendAll(msg *Message) {
 
 func (server *Server) Listen() {
 
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS " +
+		`persons("ID" SERIAL PRIMARY KEY,` +
+		`"login" varchar(255) NOT NULL, "password" varchar(255) NOT NULL, "name" varchar(255)NOT NULL, "token" varchar(500) NOT NULL)`)
+	
 	defer db.Close()
 
 	if err != nil {
