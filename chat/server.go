@@ -8,8 +8,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/websocket"
 
-	_ "github.com/go-sql-driver/mysql"
-	//_ "github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 var db, err = sql.Open("postgres", "host= port= user= password= dbname= sslmode=disable")
